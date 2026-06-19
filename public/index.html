@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="Akshaj Motion Gesture AI — Real-time accelerometer gesture recognition powered by Edge Impulse">
+  <meta name="theme-color" content="#050816">
+  <title>Akshaj Motion Gesture AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Animated background layers -->
+  <div class="bg-mesh" aria-hidden="true"></div>
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="bg-orbs" aria-hidden="true">
+    <span class="orb orb-1"></span>
+    <span class="orb orb-2"></span>
+    <span class="orb orb-3"></span>
+  </div>
+
+  <div class="app-shell">
+    <!-- ============================================================
+         SECTION 1 — Hero
+         ============================================================ -->
+    <header class="hero section fade-in" id="hero">
+      <nav class="hero-nav">
+        <a href="#hero" class="brand" aria-label="Akshaj Motion Gesture AI home">
+          <svg class="brand-logo" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <linearGradient id="logoGrad" x1="0" y1="0" x2="40" y2="40">
+                <stop offset="0%" stop-color="#00E5FF"/>
+                <stop offset="50%" stop-color="#7C4DFF"/>
+                <stop offset="100%" stop-color="#00FFA3"/>
+              </linearGradient>
+            </defs>
+            <circle cx="20" cy="20" r="18" stroke="url(#logoGrad)" stroke-width="2" fill="rgba(0,229,255,0.08)"/>
+            <path d="M12 20a8 8 0 0 1 16 0" stroke="url(#logoGrad)" stroke-width="2" stroke-linecap="round" fill="none"/>
+            <circle cx="20" cy="20" r="3" fill="url(#logoGrad)"/>
+            <path d="M20 8v4M20 28v4M8 20h4M28 20h4" stroke="url(#logoGrad)" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+          </svg>
+          <span class="brand-text">
+            <span class="brand-name">Akshaj</span>
+            <span class="brand-sub">Motion Gesture AI</span>
+          </span>
+        </a>
+        <div class="nav-badge">
+          <span class="pulse-dot" id="navLiveDot"></span>
+          <span id="navLiveText">Initializing</span>
+        </div>
+      </nav>
+
+      <div class="hero-content">
+        <div class="hero-eyebrow">
+          <span class="eyebrow-chip">Edge Impulse Powered</span>
+          <span class="eyebrow-chip accent">Real-time Inference</span>
+        </div>
+        <h1 class="hero-title">
+          <span class="gradient-text">Motion Gesture</span>
+          <span>Recognition Dashboard</span>
+        </h1>
+        <p class="hero-subtitle">
+          Detect clockwise circles, anti-clockwise circles, waves, and idle states
+          using your phone's accelerometer — powered by on-device AI.
+        </p>
+
+        <div class="status-row">
+          <div class="status-pill" id="liveStatusPill">
+            <span class="status-indicator" data-status="idle"></span>
+            <div class="status-copy">
+              <span class="status-label">Live Status</span>
+              <span class="status-value" id="liveStatusText">Standby</span>
+            </div>
+          </div>
+          <div class="status-pill" id="sensorStatusPill">
+            <span class="status-indicator" data-status="idle"></span>
+            <div class="status-copy">
+              <span class="status-label">Sensor Status</span>
+              <span class="status-value" id="sensorStatusText">Inactive</span>
+            </div>
+          </div>
+          <div class="status-pill" id="modelStatusPill">
+            <span class="status-indicator" data-status="idle"></span>
+            <div class="status-copy">
+              <span class="status-label">Model Status</span>
+              <span class="status-value" id="modelStatusText">Loading</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-actions">
+          <button type="button" class="btn btn-primary" id="btnActivateSensors">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            Activate Sensors
+          </button>
+          <button type="button" class="btn btn-secondary" id="btnStartDetection" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Start Detection
+          </button>
+          <button type="button" class="btn btn-ghost" id="btnDownloadCsv">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download CSV
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="dashboard">
+      <!-- ============================================================
+           SECTION 2 — Live Gesture Prediction
+           ============================================================ -->
+      <section class="section prediction-section fade-in" id="prediction" aria-labelledby="predictionHeading">
+        <div class="section-header">
+          <h2 id="predictionHeading" class="section-title">Live Gesture Prediction</h2>
+          <p class="section-desc">Real-time AI classification from accelerometer motion patterns</p>
+        </div>
+
+        <div class="glass-card prediction-card">
+          <div class="prediction-ring-wrap">
+            <svg class="prediction-ring" viewBox="0 0 320 320" aria-hidden="true">
+              <defs>
+                <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#00E5FF"/>
+                  <stop offset="50%" stop-color="#7C4DFF"/>
+                  <stop offset="100%" stop-color="#00FFA3"/>
+                </linearGradient>
+              </defs>
+              <circle class="ring-track" cx="160" cy="160" r="140"/>
+              <circle class="ring-progress" id="confidenceRing" cx="160" cy="160" r="140"/>
+              <circle class="ring-glow" cx="160" cy="160" r="140"/>
+            </svg>
+            <div class="prediction-core">
+              <span class="prediction-label" id="gestureLabel">IDLE</span>
+              <span class="prediction-confidence">
+                <span id="confidenceValue">0</span><span class="confidence-unit">%</span>
+              </span>
+              <span class="prediction-sublabel">Confidence</span>
+            </div>
+            <div class="pulse-ring" aria-hidden="true"></div>
+          </div>
+
+          <div class="gesture-legend">
+            <button type="button" class="legend-item" data-gesture="idle">
+              <span class="legend-dot idle"></span>
+              <span>Idle</span>
+            </button>
+            <button type="button" class="legend-item" data-gesture="clockwise">
+              <span class="legend-dot clockwise"></span>
+              <span>Clockwise</span>
+            </button>
+            <button type="button" class="legend-item" data-gesture="anticlockwise">
+              <span class="legend-dot anticlockwise"></span>
+              <span>Anti-Clockwise</span>
+            </button>
+            <button type="button" class="legend-item" data-gesture="wave">
+              <span class="legend-dot wave"></span>
+              <span>Wave</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           SECTION 3 — Live Sensor Data
+           ============================================================ -->
+      <section class="section sensor-section fade-in" id="sensors" aria-labelledby="sensorsHeading">
+        <div class="section-header">
+          <h2 id="sensorsHeading" class="section-title">Live Sensor Data</h2>
+          <p class="section-desc">Accelerometer readings updated in real time</p>
+        </div>
+
+        <div class="sensor-grid">
+          <article class="glass-card sensor-card sensor-x">
+            <div class="sensor-card-header">
+              <span class="sensor-axis">X Axis</span>
+              <span class="sensor-unit">m/s²</span>
+            </div>
+            <p class="sensor-value" id="axisX" aria-live="polite">0.00</p>
+            <div class="sensor-bar"><span class="sensor-bar-fill" id="barX"></span></div>
+          </article>
+          <article class="glass-card sensor-card sensor-y">
+            <div class="sensor-card-header">
+              <span class="sensor-axis">Y Axis</span>
+              <span class="sensor-unit">m/s²</span>
+            </div>
+            <p class="sensor-value" id="axisY" aria-live="polite">0.00</p>
+            <div class="sensor-bar"><span class="sensor-bar-fill" id="barY"></span></div>
+          </article>
+          <article class="glass-card sensor-card sensor-z">
+            <div class="sensor-card-header">
+              <span class="sensor-axis">Z Axis</span>
+              <span class="sensor-unit">m/s²</span>
+            </div>
+            <p class="sensor-value" id="axisZ" aria-live="polite">0.00</p>
+            <div class="sensor-bar"><span class="sensor-bar-fill" id="barZ"></span></div>
+          </article>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           SECTION 4 — Realtime Charts
+           ============================================================ -->
+      <section class="section chart-section fade-in" id="charts" aria-labelledby="chartsHeading">
+        <div class="section-header">
+          <h2 id="chartsHeading" class="section-title">Realtime Charts</h2>
+          <p class="section-desc">Live accelerometer waveform visualization</p>
+        </div>
+
+        <div class="glass-card chart-card">
+          <div class="chart-toolbar">
+            <div class="chart-legend-inline">
+              <span class="chart-key x">X</span>
+              <span class="chart-key y">Y</span>
+              <span class="chart-key z">Z</span>
+            </div>
+            <span class="chart-fps" id="chartFps">— Hz</span>
+          </div>
+          <div class="chart-canvas-wrap">
+            <canvas id="accelChart" aria-label="Accelerometer line chart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           SECTION 5 — Analytics Dashboard
+           ============================================================ -->
+      <section class="section analytics-section fade-in" id="analytics" aria-labelledby="analyticsHeading">
+        <div class="section-header">
+          <h2 id="analyticsHeading" class="section-title">Analytics Dashboard</h2>
+          <p class="section-desc">Session statistics and detection performance</p>
+        </div>
+
+        <div class="analytics-grid">
+          <article class="glass-card stat-card">
+            <span class="stat-icon">∑</span>
+            <span class="stat-label">Total Gestures</span>
+            <span class="stat-value" id="statTotal">0</span>
+          </article>
+          <article class="glass-card stat-card">
+            <span class="stat-icon cw">↻</span>
+            <span class="stat-label">Clockwise</span>
+            <span class="stat-value" id="statClockwise">0</span>
+          </article>
+          <article class="glass-card stat-card">
+            <span class="stat-icon acw">↺</span>
+            <span class="stat-label">Anti Clockwise</span>
+            <span class="stat-value" id="statAnticlockwise">0</span>
+          </article>
+          <article class="glass-card stat-card">
+            <span class="stat-icon wave">∿</span>
+            <span class="stat-label">Wave</span>
+            <span class="stat-value" id="statWave">0</span>
+          </article>
+          <article class="glass-card stat-card">
+            <span class="stat-icon">◎</span>
+            <span class="stat-label">Avg Confidence</span>
+            <span class="stat-value" id="statAvgConfidence">0%</span>
+          </article>
+          <article class="glass-card stat-card">
+            <span class="stat-icon">⚡</span>
+            <span class="stat-label">Detection Rate</span>
+            <span class="stat-value" id="statDetectionRate">0/min</span>
+          </article>
+        </div>
+      </section>
+
+      <!-- Bottom panels: Debug + Health -->
+      <div class="panels-grid">
+        <!-- ============================================================
+             SECTION 6 — Debug Console
+             ============================================================ -->
+        <section class="section console-section fade-in" id="console" aria-labelledby="consoleHeading">
+          <div class="section-header">
+            <h2 id="consoleHeading" class="section-title">Debug Console</h2>
+            <button type="button" class="btn-text" id="btnClearConsole">Clear</button>
+          </div>
+
+          <div class="glass-card console-card">
+            <div class="console-header">
+              <span class="console-dot red"></span>
+              <span class="console-dot yellow"></span>
+              <span class="console-dot green"></span>
+              <span class="console-title">akshaj-motion-gesture-ai</span>
+            </div>
+            <div class="console-body" id="debugConsole" role="log" aria-live="polite" aria-relevant="additions"></div>
+          </div>
+        </section>
+
+        <!-- ============================================================
+             SECTION 7 — Sensor Health
+             ============================================================ -->
+        <section class="section health-section fade-in" id="health" aria-labelledby="healthHeading">
+          <div class="section-header">
+            <h2 id="healthHeading" class="section-title">Sensor Health</h2>
+            <p class="section-desc">System readiness and environment checks</p>
+          </div>
+
+          <div class="glass-card health-card">
+            <div class="health-overall">
+              <span class="health-score" id="healthScore">—</span>
+              <div>
+                <span class="health-title">System Health</span>
+                <span class="health-sub" id="healthSummary">Checking environment…</span>
+              </div>
+            </div>
+            <ul class="health-list">
+              <li class="health-item" id="healthPermission">
+                <span class="health-check-icon">○</span>
+                <span class="health-item-label">Permission Status</span>
+                <span class="health-item-value">Pending</span>
+              </li>
+              <li class="health-item" id="healthBrowser">
+                <span class="health-check-icon">○</span>
+                <span class="health-item-label">Browser Support</span>
+                <span class="health-item-value">Checking</span>
+              </li>
+              <li class="health-item" id="healthHttps">
+                <span class="health-check-icon">○</span>
+                <span class="health-item-label">HTTPS Status</span>
+                <span class="health-item-value">Checking</span>
+              </li>
+              <li class="health-item" id="healthAvailability">
+                <span class="health-check-icon">○</span>
+                <span class="health-item-label">Sensor Availability</span>
+                <span class="health-item-value">Unknown</span>
+              </li>
+              <li class="health-item" id="healthRate">
+                <span class="health-check-icon">○</span>
+                <span class="health-item-label">Update Rate</span>
+                <span class="health-item-value">0 Hz</span>
+              </li>
+            </ul>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- ============================================================
+         SECTION 8 — Footer
+         ============================================================ -->
+    <footer class="site-footer section fade-in" id="footer">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <svg class="footer-logo" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <circle cx="16" cy="16" r="14" stroke="url(#logoGrad)" stroke-width="1.5"/>
+            <circle cx="16" cy="16" r="2.5" fill="url(#logoGrad)"/>
+          </svg>
+          <div>
+            <p class="footer-title">Akshaj Motion Gesture AI</p>
+            <p class="footer-dev">Developer: <strong>Akshaj P</strong></p>
+          </div>
+        </div>
+        <div class="footer-stack">
+          <span class="footer-label">Built using</span>
+          <div class="footer-tags">
+            <span class="tag">HTML</span>
+            <span class="tag">CSS</span>
+            <span class="tag">JavaScript</span>
+            <span class="tag">Edge Impulse</span>
+            <span class="tag">Firebase Hosting</span>
+          </div>
+        </div>
+        <p class="footer-copy">&copy; 2026 Akshaj P. All rights reserved.</p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Edge Impulse WASM runtime (model already integrated) -->
+  <script src="edge-impulse-standalone.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
